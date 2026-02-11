@@ -762,6 +762,7 @@ dependencies = [
     { name = "tqdm" },
     { name = "ty" },
     { name = "wandb" },
+    { name = "wget" },
 ]
 
 [package.metadata]
@@ -781,6 +782,7 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "ty", specifier = ">=0.0.1a16" },
     { name = "wandb", specifier = ">=0.19.7" },
+    { name = "wget", specifier = ">=3.2" },
 ]
 
 [[package]]
@@ -1020,3 +1022,9 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/e9/444b2a4455d5ef756fad52d9a55cf6a4de4095a33732081c49512b1f3c8b/wandb-0.21.2-py3-none-win32.whl", hash = "sha256:072c9c6829796c3866cd41197e6c76d86b84d10efa8c1760149dc4f704e0233e", size = 18709145, upload-time = "2025-08-28T22:50:20.628Z" },
     { url = "https://files.pythonhosted.org/packages/27/40/cf5e7e2428e0eee13a925c24e3b0741671e9f068c13d9cc13e91546df474/wandb-0.21.2-py3-none-win_amd64.whl", hash = "sha256:d95d8aa5b8900296369a769693eb4671419f9f7448562a0b9c74b26e68b120a5", size = 18709148, upload-time = "2025-08-28T22:50:22.904Z" },
 ]
+
+[[package]]
+name = "wget"
+version = "3.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/6a/62e288da7bcda82b935ff0c6cfe542970f04e29c756b0e147251b2fb251f/wget-3.2.zip", hash = "sha256:35e630eca2aa50ce998b9b1a127bb26b30dfee573702782aa982f875e3f16061", size = 10857, upload-time = "2015-10-22T15:26:37.51Z" }

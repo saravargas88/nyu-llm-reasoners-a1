@@ -1,5 +1,6 @@
 import os
 from typing import BinaryIO
+import regex as re
 
 
 def find_chunk_boundaries(
@@ -49,14 +50,64 @@ def find_chunk_boundaries(
     return sorted(set(chunk_boundaries))
 
 
-## Usage
-with open(..., "rb") as f:
-    num_processes = 4
-    boundaries = find_chunk_boundaries(f, num_processes, b"<|endoftext|>")
 
+
+def pretokenization(text: str) -> list[str]:
+    """
+    Pretokenize the chunk of text into word pretokens, punctuation pretokens, and space pretokens.
+    Keep the spaces as separate pretokens, since we want to make sure that they are not merged with other tokens during BPE merges.    
+    """
+    # re.finditer returns an iterator of Match objects for all non-overlapping matches of the regex pattern in the string.
+    # to get the list of strings i need to gruop matches by their value into a list of pretokens
+    
+    PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+    counts = {}
+    
+    for match in re.finditer(PAT, text):
+        pretoken = match.group(0)
+        if pretoken in counts: 
+            counts[pretoken] += 1
+        else: 
+            counts[pretoken] = 1
+    
+
+    
+    return counts
+
+
+def count(pretokens: list[str]) -> dict[str, int]:
+    """
+    Count the frequency of each pretoken in the list of pretokens.
+    """
+    count= {}
+    for pretoken in pretokens:
+        if pretoken in count: 
+            count[pretoken] += 1
+        else: 
+            count[pretoken] = 1
+    return count
+
+## Usage
+with open("/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/bpe_ex.txt", "rb") as f:
+    num_processes = 1
+    boundaries = find_chunk_boundaries(f, num_processes, b" ")
+    
     # The following is a serial implementation, but you can parallelize this
     # by sending each start/end pair to a set of processes.
     for start, end in zip(boundaries[:-1], boundaries[1:]):
         f.seek(start)
         chunk = f.read(end - start).decode("utf-8", errors="ignore")
         # Run pre-tokenization on your chunk and store the counts for each pre-token
+        counts= pretokenization(chunk)
+        
+        #It is convenient to represent this as a dict[tuple[bytes], int]
+        
+        counts_dict = {}
+        for token, count in counts.items():
+            byte_tuple = tuple(bytes([b]) for b in token.encode("utf-8"))
+            counts_dict[byte_tuple] = count
+
+        print(counts_dict)
+        
+        
+       
