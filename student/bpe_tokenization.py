@@ -1,10 +1,12 @@
 
 import __main__
-from asyncio import tasks
 import os
+import time
 from typing import BinaryIO
 import regex as re
+from memory_profiler import memory_usage
 from multiprocessing import Pool
+from tokenizer import Tokenizer
 
 # Part 1 of tokenization
 # - vocabulary initialization: onetoone mapping from bytestring token to integers
@@ -59,8 +61,19 @@ def find_chunk_boundaries(
     # Make sure all boundaries are unique, but might be fewer than desired_num_chunks
     return sorted(set(chunk_boundaries))
 
+import pickle
 
-
+def save_bpe(vocab, merges, save_path):
+    with open(save_path + "_vocab.pkl", "wb") as f:
+        pickle.dump(vocab, f)
+    
+    with open(save_path + "_merges.pkl", "wb") as f:
+        pickle.dump(merges, f)
+    
+    print(f"Saved vocab to {save_path}_vocab.pkl")
+    print(f"Saved merges to {save_path}_merges.pkl")
+    
+    
 
 def pretokenization(text: str) -> list[str]:
     """
@@ -78,7 +91,7 @@ def pretokenization(text: str) -> list[str]:
         pretoken = match.group(0)
         pretokens.append(pretoken)
     
-    return pretokens
+    return pretokens                 
 
 
 def count(pretokens: list[str]) -> dict[str, int]:
@@ -137,6 +150,8 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]):
         The merges should be ordered by order of creation.
     
     """
+    
+    start_time = time.time()
     # Step 1: Count all pretokens across chunks
     with open(input_path, "rb") as f:
         num_processes = 4
@@ -184,7 +199,7 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]):
             pair = (token_tuple[i], token_tuple[i + 1])
             pair_freqs[pair] = pair_freqs.get(pair, 0) + freq
             
-            
+    print("Finished counting initial pair frequencies")       
     merges = []
     while next_token_id < vocab_size :
         best_pair = max(pair_freqs, key=lambda p: (pair_freqs[p], p))   
@@ -237,7 +252,8 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]):
 
         next_token_id += 1
         
-        
+    end_time = time.time()
+    print(f"Training took: {(end_time - start_time) / 60:.2f} minutes")
     longest_token = max(vocab.values(), key=len)
     print(f"Longest token: {longest_token.decode('utf-8', errors='ignore')}")
     print(f"Length: {len(longest_token)} bytes")
@@ -246,8 +262,41 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]):
     return vocab, merges
 
 if __name__ == "__main__":
-    print("Running train_bpe with example input...")
-    input_path = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/bpe_ex.txt"
-    vocab, merges = train_bpe(input_path, vocab_size=1000, special_tokens=["<|endoftext|>"])
-    print("Vocab size:", len(vocab))
-    print("Number of merges:", len(merges))
+    
+    
+    tokenizer = Tokenizer.from_files(
+        vocab_filepath  = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/student/results/bpe_vocab.pkl",
+        merges_filepath = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/student/results/bpe_merges.pkl",
+        special_tokens  = ["<|endoftext|>"]
+    )
+        
+    # Quick sanity check
+    test = "Once upon a time there was a little boy."
+    ids = tokenizer.encode(test)
+    print("IDs:", ids)
+    print("Decoded:", tokenizer.decode(ids))
+    print("Round-trip match:", tokenizer.decode(ids) == test)
+    
+    # input_path = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/TinyStoriesV2-GPT4-train.txt"
+    # save_path = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/student/results/bpe"
+    # os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    # mem_usage , (vocab, merges) = memory_usage((train_bpe, (input_path, 10000, ["<|endoftext|>"])), retval= True)
+    # save_bpe(vocab, merges, save_path
+    
+    
+    
+    
+    
+    
+    
+    
+#     # print("Running train_bpe with example input...")
+#     # input_path = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/TinyStoriesV2-GPT4-train.txt"
+#     # #vocab, merges = train_bpe(input_path, vocab_size=1000, special_tokens=["<|endoftext|>"])
+#     mem_usage , (vocab, merges) = memory_usage((train_bpe, (input_path, 10000, ["<|endoftext|>"])), retval= True)
+#     # print(f"Peak memory usage: {max(mem_usage)} MB")
+    
+#     # save_path = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/student/results/bpe_vocab_and_merges"
+#     # os.makedirs(os.path.dirname(save_path), exist_ok=True)
+#      save_bpe(vocab, merges, save_path)
+
