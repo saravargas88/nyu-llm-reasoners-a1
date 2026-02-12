@@ -595,5 +595,5 @@ def run_train_bpe(
     """
     
     from student.bpe_tokenization import train_bpe
-    print(input_path)
+
     return train_bpe(input_path, vocab_size, special_tokens)
