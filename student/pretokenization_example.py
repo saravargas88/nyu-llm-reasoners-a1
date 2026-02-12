@@ -50,15 +50,22 @@ def find_chunk_boundaries(
     return sorted(set(chunk_boundaries))
 
 
-
+import multiprocessing as mp
 
 def pretokenization(text: str) -> list[str]:
     """
     Pretokenize the chunk of text into word pretokens, punctuation pretokens, and space pretokens.
     Keep the spaces as separate pretokens, since we want to make sure that they are not merged with other tokens during BPE merges.    
     """
+    
+    #remove special tokens: 
+    
+    
     # re.finditer returns an iterator of Match objects for all non-overlapping matches of the regex pattern in the string.
     # to get the list of strings i need to gruop matches by their value into a list of pretokens
+    
+    
+    
     
     PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
     counts = {}
@@ -89,11 +96,14 @@ def count(pretokens: list[str]) -> dict[str, int]:
 
 ## Usage
 with open("/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/bpe_ex.txt", "rb") as f:
-    num_processes = 1
+    num_processes = 4
     boundaries = find_chunk_boundaries(f, num_processes, b" ")
     
     # The following is a serial implementation, but you can parallelize this
     # by sending each start/end pair to a set of processes.
+    
+    # Recommend when mp: you chunk the corpus while
+    # ensuring your chunk boundaries occur at the beginning of a special token
     for start, end in zip(boundaries[:-1], boundaries[1:]):
         f.seek(start)
         chunk = f.read(end - start).decode("utf-8", errors="ignore")

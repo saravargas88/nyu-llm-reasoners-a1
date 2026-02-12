@@ -59,8 +59,6 @@ class Tokenizer :
         Encode an input text into a sequence of token IDs
         '''
         
-        
-        
         # 1. pretokenize the the seqeunce
         #   represent the pretokenized sequence as a list of bytestring tokens (pretokens)
         # 2. apply merges to the pretokenized sequence
