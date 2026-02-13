@@ -5,7 +5,8 @@ import json
 import pickle
 from pydoc import text
 import regex as re
-
+import time
+import numpy as np
 
 def pretokenization(text: str) -> list[str]:
     """
@@ -26,6 +27,43 @@ def pretokenization(text: str) -> list[str]:
     return pretokens
 
 
+def encode_file_to_numpy(tokenizer, input_path, output_path):
+    
+    # open the file as an iterable 
+    with open(input_path, "r", encoding="utf-8") as f:
+        token_ids = list(tokenizer.encode_iterable(f))
+    
+    # convert to uint16 numpy array and save
+    arr = np.array(token_ids, dtype=np.uint16)
+    np.save(output_path, arr)
+    
+    print(f"Encoded {len(arr)} tokens")
+    print(f"Saved to {output_path}")
+    print(f"File size: {arr.nbytes / 1e6:.1f} MB")
+    
+    
+def apply_merges( tokens, merge_rank ):
+    '''
+    Apply the BPE merges to independent pretokens 
+    
+    '''
+    while True: 
+        best_rank = float("inf")
+        best_i= -1000
+        
+        for i in range (len(tokens)-1 ):
+            rank = merge_rank.get((tokens[i], tokens[i + 1]))
+            if rank is not None and rank < best_rank: 
+                best_rank = rank
+                best_i = i
+        if best_i == -1000:
+            break #there arent more moerges
+    
+        tokens = (tokens[:best_i] + [tokens[best_i] + tokens[best_i + 1]] + tokens[best_i + 2:])
+        
+    return tokens
+        
+        
 class Tokenizer : 
     def __init__(self, vocab, merges, special_tokens=None):
         self.vocab = vocab  
@@ -41,7 +79,9 @@ class Tokenizer :
 
         #mapping for assiging token ids during encoding
         self.token_to_id= {vocab_token: vocab_id for vocab_id, vocab_token in self.vocab.items()}
-
+        #merge rank : to avoid having a poor look up for pairs
+        # merge rank allows for for the merges list to have an O(1) look up of the index of the pair
+        self.merge_rank = {(a, b): idx for idx, (a, b) in enumerate(self.merges)}
     
     @classmethod
     def from_files(cls, vocab_filepath, merges_filepath, special_tokens=None):
@@ -53,78 +93,49 @@ class Tokenizer :
         
         return cls(vocab, merges, special_tokens)
     
-    
     def encode(self, text: str) -> list[int] :
         '''
         Encode an input text into a sequence of token IDs
-        '''
-        
         # 1. pretokenize the the seqeunce
         #   represent the pretokenized sequence as a list of bytestring tokens (pretokens)
         # 2. apply merges to the pretokenized sequence
         # 3. convert the merged tokens into token IDs using the vocab
         # 4. return the list of token IDs
+        '''
         
-        
-        #treat special tokens in text before pretokenization
-        # 1 split text into chunks 
-        # and escape special tokens in text so not to split them in pretokenization
         token_ids=[] #token ids for the text given the vocabulary
-        print("\n\n\ntext to encode", text)
-        
-        #print(self.vocab)
-        
-        #exit()
-        #Apparently the parenthesis makes the regix pattern also return the matched special token as part of the split output
-        # which is what we want since we want to treat them as separate tokens
-        pattern = "(" + "|".join(re.escape(t) for t in self.special_tokens) + ")"
 
+
+        if not self.special_tokens:
+            # no special tokens, encode directly without splitting
+            pretokens = pretokenization(text)
+            for pretoken in pretokens:
+                tokens = [bytes([b]) for b in pretoken.encode("utf-8")]
+                tokens = apply_merges(tokens, self.merge_rank)
+                for token in tokens:
+                    token_ids.append(self.token_to_id[token])
+            return token_ids
+
+        # if it does have special tokens:
+        pattern = "(" + "|".join(re.escape(t) for t in self.special_tokens) + ")"
         text_split_by_special_tokens = re.split(pattern, text)
-        
-        
+
         for split in text_split_by_special_tokens:
             if split == "":
                 continue
             if split in self.special_tokens:
                 token_ids.append(self.token_to_id[split.encode("utf-8")])
             else:
-
                 pretokens = pretokenization(split)
-                #print(pretokens)
-                tokens_per_pretoken = [[bytes([b]) for b in pretoken.encode("utf-8")]for pretoken in pretokens]
-                
-                vocab_merges = self.merges
-                #outer merge loop (ensure order)
-                for merge_token_1, merge_token_2 in vocab_merges:
-                    merged_token = merge_token_1 + merge_token_2
-                    
-                    #loop thoruhg a pretoken at a time
-                    for i in range(len(tokens_per_pretoken)):
-                        tokens = tokens_per_pretoken[i]
-                        #print("current tokens", tokens)
-                        
-                        #look for mergeable pair and save new tokens
-                        new_tokens= []
-                        t= 0
-                        while t< len(tokens):
-                            if t< len(tokens)-1 and tokens[t]==merge_token_1 and tokens[t+1]==merge_token_2:
-                                new_tokens.append(merged_token)
-                                t+=2
-                                
-                            else:
-                                new_tokens.append(tokens[t])
-                                t+=1
-                                
-                        #save the tokens back 
-                        tokens_per_pretoken[i]= new_tokens
-                        
-                for tokens in tokens_per_pretoken:
+                for pretoken in pretokens:
+                    tokens = [bytes([b]) for b in pretoken.encode("utf-8")]
+                    tokens = apply_merges(tokens, self.merge_rank)
                     for token in tokens:
-                        token_ids.append(self.token_to_id[token])      
-        
-                    
+                        token_ids.append(self.token_to_id[token])
+
         return token_ids
-        
+
+         
     
     
     def encode_iterable(self, iterable: Iterable[str]) -> Iterator[int]:
@@ -134,6 +145,8 @@ class Tokenizer :
         memory.
         
         '''
+        for chunk in iterable:
+            yield from self.encode(chunk)
         
     def decode(self, ids: list[int]) -> str : 
         '''
@@ -144,9 +157,54 @@ class Tokenizer :
         bytestring= b"".join(self.vocab[id] for id in ids)
         return bytestring.decode("utf-8", errors="replace")
      
-        
-        
-    
 
-        
+if __name__== "__main__":
     
+    vocab_path = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/student/results/bpe_vocab.pkl"
+    merges_path= "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/student/results/bpe_merges.pkl"
+    special_tokens=["<|endoftext|>"]
+
+    tokenizer = Tokenizer.from_files(vocab_filepath=vocab_path, merges_filepath=merges_path, special_tokens= special_tokens)
+    
+    encode_file_to_numpy(
+        tokenizer,
+        input_path  = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/TinyStoriesV2-GPT4-train.txt",
+        output_path = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/student/results/train_tokens.npy"
+    )
+
+    encode_file_to_numpy(
+        tokenizer,
+        input_path  = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/TinyStoriesV2-GPT4-valid.txt",
+        output_path = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/student/results/valid_tokens.npy"
+    )
+
+    
+    
+    # #read 10 docs so get subset of earlier and then only use 10 
+    # docs_path= "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/TinyStoriesV2-GPT4-train.txt"
+    
+    # with open(docs_path, "r", encoding="utf-8") as f:
+    #     raw_text = f.read(1_000_000)
+    
+    # documents = [d for d in re.split(r"<\|endoftext\|>", raw_text) if d.strip()]
+    # sample_docs = documents[:10]
+    
+    
+    # #now encode 
+    # start_time = time.time()
+    # encode_docs= [tokenizer.encode(doc) for doc in sample_docs]
+    # end = time.time()
+    
+    # time_encoding= end-start_time
+    # print(time_encoding)
+    # #compression ratio:number of bytes over number of tokens
+    
+    # total_bytes= sum(len(doc.encode("utf-8")) for doc in sample_docs)
+    # total_tokens=  sum(len(encoded) for encoded in encode_docs)
+    
+    # compression_ratio=total_bytes/total_tokens
+    
+    # throughput= total_bytes/time_encoding
+    
+    # print("compression ratio ",compression_ratio )
+    # print("throughput ratio ",throughput )

@@ -284,6 +284,8 @@ def test_address_matches_tiktoken():
     corpus_path = FIXTURES_PATH / "address.txt"
     with open(corpus_path) as f:
         corpus_contents = f.read()
+        
+    #print('corpus: \n', corpus_contents)
     reference_ids = reference_tokenizer.encode(corpus_contents)
     ids = tokenizer.encode(corpus_contents)
     assert ids == reference_ids
@@ -299,7 +301,7 @@ def test_german_roundtrip():
     )
     with open(FIXTURES_PATH / "german.txt") as f:
         corpus_contents = f.read()
-
+    
     ids = tokenizer.encode(corpus_contents)
     assert tokenizer.decode(ids) == corpus_contents
 
@@ -341,6 +343,9 @@ def test_tinystories_matches_tiktoken():
     corpus_path = FIXTURES_PATH / "tinystories_sample.txt"
     with open(corpus_path) as f:
         corpus_contents = f.read()
+        
+        
+    
     reference_ids = reference_tokenizer.encode(corpus_contents, allowed_special={"<|endoftext|>"})
     ids = tokenizer.encode(corpus_contents)
     assert ids == reference_ids
