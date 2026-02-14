@@ -29,7 +29,10 @@ def run_linear(
         Float[Tensor, "... d_out"]: The transformed output of your linear module.
     """
 
-    raise NotImplementedError
+    from student.Transformer import LinearLayer
+    layer= LinearLayer(in_features=d_in, out_features=d_out )
+    layer.load_state_dict({"W": weights})
+    return layer(in_features)
 
 
 def run_embedding(
@@ -51,7 +54,10 @@ def run_embedding(
         Float[Tensor, "... d_model"]: Batch of embeddings returned by your Embedding layer.
     """
 
-    raise NotImplementedError
+    from student.Transformer import Embedding
+    embedding = Embedding(num_embeddings=vocab_size, embedding_dim=d_model )
+    embedding.load_state_dict({"embedding_matrix": weights})
+    return embedding(token_ids)
 
 
 def run_swiglu(
@@ -83,8 +89,12 @@ def run_swiglu(
     # swiglu.w1.weight.data = w1_weight
     # swiglu.w2.weight.data = w2_weight
     # swiglu.w3.weight.data = w3_weight
-    raise NotImplementedError
+    from student.Transformer import positionwise_ffn
+    
+    position_fnn= positionwise_ffn(dmodel=d_model, )
+    position_fnn.load_state_dict({"W1":w1_weight ,"W2":w2_weight, "W3":w3_weight })
 
+    return position_fnn(in_features)
 
 def run_scaled_dot_product_attention(
     Q: Float[Tensor, " ... queries d_k"],
@@ -382,7 +392,10 @@ def run_rmsnorm(
         Float[Tensor,"... d_model"]: Tensor of with the same shape as `in_features` with the output of running
         RMSNorm of the `in_features`.
     """
-    raise NotImplementedError
+    from student.Transformer import RMSNorm
+    rms_norm= RMSNorm(d_model=d_model, eps=eps )
+    rms_norm.load_state_dict({"g": weights})
+    return rms_norm(in_features)
 
 
 def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:

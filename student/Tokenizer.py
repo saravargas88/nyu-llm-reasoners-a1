@@ -57,12 +57,11 @@ def apply_merges( tokens, merge_rank ):
                 best_rank = rank
                 best_i = i
         if best_i == -1000:
-            break #there arent more moerges
+            break #there arent more merges
     
         tokens = (tokens[:best_i] + [tokens[best_i] + tokens[best_i + 1]] + tokens[best_i + 2:])
         
     return tokens
-        
         
 class Tokenizer : 
     def __init__(self, vocab, merges, special_tokens=None):
