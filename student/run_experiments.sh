@@ -1,5 +1,5 @@
 
-BASE="python train.py"
+BASE="uv run python -m student.train"
 
 # FIX 7: use quoted paths (spaces in path break bash without quotes)
 TRAIN_PATH="/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/results/train_tokens.npy"

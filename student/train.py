@@ -164,12 +164,15 @@ import argparse
 
 def arg_parse(): 
     p= argparse.ArgumentParser()
+    
+    p.add_argument("--train_path", type=str, default="/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/results/train_tokens.npy")
+    p.add_argument("--val_path",   type=str, default="/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/results/valid_tokens.npy")
     p.add_argument("--run_name",type= str, default= "run" )
     p.add_argument("--lr", type = float, default= 3e-4)
-    p.add_argument("--lr_min", type = int, default= 10000)
-    p.add_argument("--device", type = str, default= "cuda")
+    p.add_argument("--lr_min", type=float, default=3e-5)
+    p.add_argument("--device", type=str, default="mps" if torch.backends.mps.is_available() else "cpu")
     
-    p.add_argument("--lr_warmup", type = int, default= 10000)
+
     p.add_argument("--beta1", type = float, default= 0.9)
     p.add_argument("--beta2", type = float, default=0.999 )
     p.add_argument("--epsilon", type = float, default= 1e-8)
@@ -247,17 +250,11 @@ def init_wandb(args, model):
     wandb.watch(model, log="gradients", log_freq=100)
     
 def main(): 
- 
-    TRAIN_PATH = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/results/train_tokens.npy"
-    #os.makedirs(TRAIN_PATH, exist_ok=True)
-    VAL_PATH = "/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/valid_tokens.npy"
-    #os.makedirs(VAL_PATH, exist_ok=True)
-    
-    
     args= arg_parse()
+    train_data = np.load(args.train_path, mmap_mode="r")
+    val_data   = np.load(args.val_path,   mmap_mode="r")
     
-    train_data = np.load(TRAIN_PATH, mmap_mode="r")
-    val_data   = np.load(VAL_PATH,   mmap_mode="r" )
+    
     
     
     model = TransformerLM(
@@ -277,7 +274,7 @@ def main():
     n_params= sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Parameters: {n_params:,}   using   device: {args.device}")
     print(f"Config: lr={args.lr}, batch={args.batch_size}, steps={args.total_steps}")
-    
+    init_wandb(args, model)
     optimiser= AdamW(
         model.parameters(), 
         lr= args.lr, 
@@ -313,7 +310,7 @@ def main():
         inputs, targets = get_batch(x= train_data,batch_size=args.batch_size,  context_length=args.context_length, device=args.device)
         
         logits = model(inputs)
-        loss= cross_entropy(logits= logits, targets=targets)
+        loss = cross_entropy(logits.view(-1, args.vocab_size), targets.view(-1))
         
         #backward
         optimiser.zero_grad()
