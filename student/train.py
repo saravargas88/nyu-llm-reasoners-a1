@@ -245,8 +245,8 @@ def main():
     
     args= arg_parse()
     
-    train_data = np.load(TRAIN_PATH, mmap_mode="r", dtype=np.uint16 )
-    val_data   = np.load(VAL_PATH,   mmap_mode="r" , dtype=np.uint16 )
+    train_data = np.load(TRAIN_PATH, mmap_mode="r")
+    val_data   = np.load(VAL_PATH,   mmap_mode="r" )
     
     
     model = TransformerLM(

@@ -98,12 +98,11 @@ if __name__ == "__main__":
     model.eval()
     
     prompt_ids = tokenizer.encode(args.prompt)
-    print(f"\nPrompt: {args.prompt!r}  ({len(prompt_ids)} tokens)")
+    print(f"\nPrompt: {args.prompt}  ")
     print(f"temperature={args.temperature} \n")
     print("─" * 60)
     
     #generate 
-    
     generated_ids = decoder(
         model=model,
         prompt_ids=prompt_ids,
@@ -115,3 +114,7 @@ if __name__ == "__main__":
     generated_text = tokenizer.decode(generated_ids)
     print(args.prompt + generated_text)
     print(f"\nGenerated {len(generated_ids)} tokens.")
+    
+
+
+
