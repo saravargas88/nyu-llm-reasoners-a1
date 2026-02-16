@@ -4,9 +4,9 @@ import os
 import time
 from typing import BinaryIO
 import regex as re
-from memory_profiler import memory_usage
+
 from multiprocessing import Pool
-from tokenizer import Tokenizer
+from student.Tokenizer import Tokenizer
 
 # Part 1 of tokenization
 # - vocabulary initialization: onetoone mapping from bytestring token to integers

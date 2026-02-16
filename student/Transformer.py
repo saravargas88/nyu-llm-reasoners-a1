@@ -96,22 +96,31 @@ class RMSNorm(nn.Module):
         rms_norm= (x/rms)* self.g
         
         return rms_norm.to(in_dtype)
-        
+    
+    
+    
+
+    
+def silu(x):
+    return x * torch.sigmoid(x)
+    
+     
 class positionwise_ffn(nn.Module):
-    def __init__(self,dff,  dmodel):
+    def __init__(self,d_model, d_ff=None):
         super().__init__()
-        self.w1 = nn.Parameter(torch.empty(dff, dmodel))
-        self.w2 = nn.Parameter(torch.empty(dmodel, dff))
-        self.w3 = nn.Parameter(torch.empty(dff, dmodel))
+        if d_ff== None :
+            d_ff= (8/3)*d_model
         
-        self.dff= (8/3)*dmodel 
+        self.w1 = nn.Parameter(torch.empty(d_ff, d_model))
+        self.w2 = nn.Parameter(torch.empty(d_model,d_ff))
+        self.w3 = nn.Parameter(torch.empty(d_ff, d_model))
         
         
     def forward(self, x): 
         x1 = torch.einsum("...m,fm->...f", x, self.w1)  
         x3 = torch.einsum("...m,fm->...f", x, self.w3)
-        silu = x1 * torch.sigmoid(x1)        
-        out = torch.einsum("...f,mf->...m", silu * x3, self.w2)
+        silu_output = silu(x1)     
+        out = torch.einsum("...f,mf->...m", silu_output * x3, self.w2)
         return out
 
     
@@ -175,23 +184,23 @@ class MultiHeadSelfAttention(nn.Module):
 
 
     def forward(self, x: torch.Tensor, token_positions: torch.Tensor) -> torch.Tensor:
+        
         batch, seq_len, d_model = x.shape
-    
-        #get q, k, v projections
+
         Q = self.W_Q(x)  
         K = self.W_K(x)  
         V = self.W_V(x) 
         
         # split into heads
-        Q = Q.view(batch, seq_len, self.num_heads, self.d_k).transpose(1, 2)  # (batch, heads, seq_len, d_k)
-        K = K.view(batch, seq_len, self.num_heads, self.d_k).transpose(1, 2)  # (batch, heads, seq_len, d_k)
-        V = V.view(batch, seq_len, self.num_heads, self.d_k).transpose(1, 2)  # (batch, heads, seq_len, d_k)
+        Q = Q.view(batch, seq_len,self.num_heads, self.d_k).transpose(1, 2) 
+        K = K.view(batch, seq_len,self.num_heads, self.d_k).transpose(1, 2)
+        V = V.view(batch, seq_len,self.num_heads, self.d_k).transpose(1, 2) 
         
         if self.rope is not None:
-            token_positions_exp = token_positions.unsqueeze(0).unsqueeze(0).expand(batch, self.num_heads, seq_len)
-            Q = self.rope(Q, token_positions_exp)
-            K = self.rope(K, token_positions_exp)
-                
+            token_pos_for_rope = token_positions[0]  
+            Q = self.rope(Q, token_pos_for_rope)
+            K = self.rope(K, token_pos_for_rope)
+                        
         mask = ~torch.triu(torch.ones(seq_len, seq_len, dtype=torch.bool, device=x.device), diagonal=1)
 
         attn_out = scaled_dot_product_attention(Q, K, V, mask=mask)
@@ -208,15 +217,16 @@ class TransformerBlock(nn.Module):
         self.attn = MultiHeadSelfAttention(d_model=d_model, num_heads=num_heads, theta=theta, max_seq_len=max_seq_len, device=device, dtype=dtype)
         
         self.ln2 = RMSNorm(d_model, device=device, dtype=dtype)
-        self.ffn = positionwise_ffn(dff=d_ff, dmodel=d_model)
+        self.ffn = positionwise_ffn(d_ff=d_ff, d_model=d_model)
 
-    def forward(self, x: torch.Tensor, token_positions: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, token_positions: torch.Tensor = None) -> torch.Tensor:
+        if token_positions is None: 
+            batch, seq_len, _ = x.shape
+            token_positions = torch.arange(seq_len, device=x.device).unsqueeze(0).expand(batch, seq_len)
         x = x + self.attn(self.ln1(x), token_positions)
         x = x + self.ffn(self.ln2(x))
         return x
-    
-    
-    
+
     
 #PUTTING IT ALL TOGETHER
 class TransformerLM(nn.Module):
@@ -236,22 +246,21 @@ class TransformerLM(nn.Module):
         #normalization layer before last projection
         self.ln_final = RMSNorm(d_model, device=device, dtype=dtype)
         
-        # project from d_model to vocab_size to get next token logits
+        #project from d_model to vocab_size to get next token logits
         self.lm_head = LinearLayer(d_model, vocab_size, device=device, dtype=dtype)
 
     def forward(self, token_ids: torch.Tensor) -> torch.Tensor:
-    
         hidden_states = self.token_embeddings(token_ids)  # (batch_size, sequence_length, d_model)
-    
-        sequence_length = token_ids.shape[1]
-        token_positions = torch.arange(sequence_length, device=token_ids.device)
-        
-        # pass through each transformer block
+
+        #pass through each transformer block
         for transformer_block in self.layers:
-            hidden_states = transformer_block(hidden_states, token_positions)
-        
-        # normalize and project to vocabulary
+            hidden_states = transformer_block(hidden_states)
+            
+        #normalize and project to vocabulary
         hidden_states = self.ln_final(hidden_states)
-        next_token_logits = self.lm_head(hidden_states)  # (batch_size, sequence_length, vocab_size)
+        next_token_logits = self.lm_head(hidden_states)  # batchsize, seqlen, vocab
         
         return next_token_logits
+    
+    
+    
