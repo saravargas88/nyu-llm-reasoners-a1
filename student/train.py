@@ -165,29 +165,40 @@ import argparse
 def arg_parse(): 
     p= argparse.ArgumentParser()
     p.add_argument("--run_name",type= str, default= "run" )
-    p.add_argument("--lr", type = int, default= 10000)
+    p.add_argument("--lr", type = float, default= 3e-4)
+    p.add_argument("--lr_min", type = int, default= 10000)
+    p.add_argument("--device", type = str, default= "cuda")
+    
     p.add_argument("--lr_warmup", type = int, default= 10000)
     p.add_argument("--beta1", type = float, default= 0.9)
     p.add_argument("--beta2", type = float, default=0.999 )
     p.add_argument("--epsilon", type = float, default= 1e-8)
     
-    p.add_argument("--weight_decay", type = int, default= 0.1)
+    p.add_argument("--weight_decay", type = float, default= 0.1)
     
     p.add_argument("--checkpoint_dir", type=str, default="/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/checkpoints")
     p.add_argument("--checkpoint", type=str, default=None,
                    help="Path to a checkpoint to resume training from")
     
+    #stuff fofr model
     p.add_argument("--vocab_size", type = int, default= 10000)
     p.add_argument("--context_length", type = int, default= 256)
     p.add_argument("--d_model", type = int, default= 512)
     p.add_argument("--d_ff", type = int, default= 1344)
     p.add_argument("--theta", type = int, default= 10000)
-    p.add_argument("--layers", type = int, default= 4)
-    p.add_argument("--heads", type = int, default= 16)
+    p.add_argument("--num_layers", type = int, default= 4)
+    p.add_argument("--num_heads", type = int, default= 16)
     p.add_argument("--tokens", type = int, default= 327680000)
    
+    #EXPERIMENTATION
+    # ABLATION WHERE each turns off one architectural component
+    p.add_argument("--no_rmsnorm", action="store_true")
+    p.add_argument("--post_norm",  action="store_true")
+    p.add_argument("--no_rope",    action="store_true")
+    p.add_argument("--use_silu",   action="store_true")
     
     
+    p.add_argument("--eval_steps",    type=int, default=20)
     p.add_argument("--batch_size",   type=int,   default=64)
     p.add_argument("--total_steps",  type=int,   default=5_000)
     p.add_argument("--warmup_steps", type=int,   default=200)
@@ -232,7 +243,7 @@ def init_wandb(args, model):
         "n_parameters": sum(p.numel() for p in model.parameters())
     })
 
-    #automatically track gradients + parameters
+    
     wandb.watch(model, log="gradients", log_freq=100)
     
 def main(): 
@@ -256,11 +267,11 @@ def main():
         d_ff           = args.d_ff,
         num_layers     = args.num_layers,
         num_heads      = args.num_heads,
-        rope_theta     = args.rope_theta,
-        # use_rmsnorm    = not args.no_rmsnorm,   # --no_rmsnorm turns this off
-        # pre_norm       = not args.post_norm,    # --post_norm switches to post-norm
-        # use_rope       = not args.no_rope,      # --no_rope gives NoPE
-        # use_swiglu     = not args.use_silu,     # --use_silu swaps in plain SiLU
+        theta     = args.theta,
+         use_rmsnorm    = not args.no_rmsnorm,   
+         pre_norm       = not args.post_norm,    
+         use_rope       = not args.no_rope,      
+         use_swiglu     = not args.use_silu,    
     ).to(args.device)
     
     n_params= sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -282,7 +293,7 @@ def main():
         
     model.train()
     
-    start_time = time()
+    start_time = time.time()
     
     for  step in range(start_step, args.total_steps):
         
@@ -314,25 +325,18 @@ def main():
         
         optimiser.step()
         
-        #log train loss
-        wandb.log({"train_loss": loss.item(), "train_lr": lr_t}, step=step)
-        
-        
-        end_time= time()
-        #log the checkpoint every 100 stepos
-        if step % 300 == 0 or step == args.total_steps - 1:
-            val_loss = validation_loss(model, val_data, args)
-            
-            
-            wandb.log({"val_loss": val_loss}, step=step)
-            
-            
+        wandb.log({"train/loss": loss.item(), "train/lr": lr_t}, step=step)
+
+        if step % args.eval_interval == 0 or step == args.total_steps - 1:
+            val = validation_loss(model, val_data, args)
+            time_elapsed = time.time() - start_time
+            wandb.log({"val/loss": val}, step=step)
             print(
                 f"step {step:6d} | "
                 f"train {loss.item():.4f} | "
-                f"val {val_loss:.4f} | "
-                f"time {(end_time - start_time):.4f} | "
+                f"val {val:.4f} | "
                 f"lr {lr_t:.2e} | "
+                f"{time_elapsed:.0f}s"
             )
             ckpt_path = os.path.join(args.checkpoint_dir, f"step_{step:06d}.pt")
             save_checkpoint(model, optimiser, step, ckpt_path)

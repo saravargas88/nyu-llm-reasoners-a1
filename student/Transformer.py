@@ -122,6 +122,24 @@ class positionwise_ffn(nn.Module):
         silu_output = silu(x1)     
         out = torch.einsum("...f,mf->...m", silu_output * x3, self.w2)
         return out
+    
+    
+
+     
+class positionwise_ffn_silu(nn.Module):
+    def __init__(self,d_model, d_ff=None):
+        super().__init__()
+        if d_ff is None:
+            d_ff = 4 * d_model
+        
+        self.w1 = nn.Parameter(torch.empty(d_ff, d_model))
+        self.w2 = nn.Parameter(torch.empty(d_model,d_ff))
+        
+        
+        
+    def forward(self, x): 
+        x1 = torch.einsum("...m,fm->...f", x, self.w1)
+        return torch.einsum("...f,mf->...m", silu(x1), self.w2)
 
     
     
@@ -210,27 +228,51 @@ class MultiHeadSelfAttention(nn.Module):
 
 
 class TransformerBlock(nn.Module):
-    def __init__(self, d_model: int, num_heads: int, d_ff: int, theta: float = None, max_seq_len: int = None, device=None, dtype=None):
+    def __init__(self, d_model: int, num_heads: int, d_ff: int, theta: float = None, max_seq_len: int = None, device=None, dtype=None,
+                 use_rmsnorm: bool = True,      
+                 pre_norm: bool = True,          
+                 use_rope: bool = True,      
+                 use_swiglu: bool = True)   :
+        
         super().__init__()
+        self.pre_norm = pre_norm
+        norm = RMSNorm if use_rmsnorm else nn.Identity
+        self.ln1 = norm(d_model, device=device, dtype=dtype) if use_rmsnorm else nn.Identity() 
+        self.attn = MultiHeadSelfAttention(d_model=d_model, num_heads=num_heads, theta=theta if use_rope else None, max_seq_len=max_seq_len, device=device, dtype=dtype)
         
-        self.ln1 = RMSNorm(d_model, device=device, dtype=dtype)
-        self.attn = MultiHeadSelfAttention(d_model=d_model, num_heads=num_heads, theta=theta, max_seq_len=max_seq_len, device=device, dtype=dtype)
+        self.ln2 = norm(d_model, device=device, dtype=dtype) if use_rmsnorm else nn.Identity() 
         
-        self.ln2 = RMSNorm(d_model, device=device, dtype=dtype)
-        self.ffn = positionwise_ffn(d_ff=d_ff, d_model=d_model)
+        if use_swiglu:
+            self.ffn = positionwise_ffn(d_model=d_model, d_ff=d_ff)
+        else:
+            self.ffn = positionwise_ffn_silu(d_model=d_model, d_ff=d_ff)
+
 
     def forward(self, x: torch.Tensor, token_positions: torch.Tensor = None) -> torch.Tensor:
         if token_positions is None: 
             batch, seq_len, _ = x.shape
             token_positions = torch.arange(seq_len, device=x.device).unsqueeze(0).expand(batch, seq_len)
-        x = x + self.attn(self.ln1(x), token_positions)
-        x = x + self.ffn(self.ln2(x))
+        
+        if self.pre_norm:
+            x = x + self.attn(self.ln1(x), token_positions)
+            x = x + self.ffn(self.ln2(x))
+            
+        else:
+            x = self.ln1(x + self.attn(x, token_positions))
+            x = self.ln2(x + self.ffn(x))   
+            
+        
         return x
 
     
 #PUTTING IT ALL TOGETHER
 class TransformerLM(nn.Module):
-    def __init__(self, vocab_size: int, context_length: int, d_model: int, num_layers: int, num_heads: int, d_ff: int, theta: float = None, device=None, dtype=None):
+    def __init__(self, vocab_size: int, context_length: int, d_model: int, num_layers: int, num_heads: int, d_ff: int, theta: float = 10_000.0, device=None, dtype=None, 
+                 use_rmsnorm: bool = True,
+                pre_norm: bool = True,
+                use_rope: bool = True,
+                use_swiglu: bool = True,
+               ):
         super().__init__()
         
         #TOKEN IDS TO EMBEDDING VECTORS
@@ -238,13 +280,24 @@ class TransformerLM(nn.Module):
         
         # STACK BLOCKS
         self.layers = nn.ModuleList([
-            TransformerBlock(d_model=d_model, num_heads=num_heads, d_ff=d_ff, 
-                           theta=theta, max_seq_len=context_length, device=device, dtype=dtype)
-            for i in range(num_layers)
+            TransformerBlock(
+                d_model=d_model,
+                num_heads=num_heads,
+                d_ff=d_ff,
+                theta=theta,
+                max_seq_len=context_length,
+                use_rmsnorm=use_rmsnorm,
+                pre_norm=pre_norm,
+                use_rope=use_rope,
+                use_swiglu=use_swiglu,
+                device=device,
+                dtype=dtype,
+            )
+            for _ in range(num_layers)
         ])
         
         #normalization layer before last projection
-        self.ln_final = RMSNorm(d_model, device=device, dtype=dtype)
+        self.ln_final = RMSNorm(d_model, device=device, dtype=dtype) if use_rmsnorm else nn.Identity()
         
         #project from d_model to vocab_size to get next token logits
         self.lm_head = LinearLayer(d_model, vocab_size, device=device, dtype=dtype)
