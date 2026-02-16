@@ -165,8 +165,8 @@ import argparse
 def arg_parse(): 
     p= argparse.ArgumentParser()
     
-    p.add_argument("--train_path", type=str, default="/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/results/train_tokens.npy")
-    p.add_argument("--val_path",   type=str, default="/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/results/valid_tokens.npy")
+    p.add_argument("--train_path", type=str, default="/ext3/nyu-llm-reasoners-a1/data/results/train_tokens.npy")
+    p.add_argument("--val_path",   type=str, default="/ext3/nyu-llm-reasoners-a1/data/results/valid_tokens.npy")
     p.add_argument("--run_name",type= str, default= "run" )
     p.add_argument("--lr", type = float, default= 3e-4)
     p.add_argument("--lr_min", type=float, default=3e-5)
@@ -179,7 +179,7 @@ def arg_parse():
     
     p.add_argument("--weight_decay", type = float, default= 0.1)
     
-    p.add_argument("--checkpoint_dir", type=str, default="/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/checkpoints")
+    p.add_argument("--checkpoint_dir", type=str, default="/ext3/nyu-llm-reasoners-a1/data/checkpoints")
     p.add_argument("--checkpoint", type=str, default=None,
                    help="Path to a checkpoint to resume training from")
     
@@ -236,7 +236,7 @@ import wandb
 def init_wandb(args, model):
     wandb.init(
         project='llm-reasoners-a1',
-        entity="saravargasmar",
+        entity="saravargasmar-new-york-university",
         name=args.run_name,
         config=vars(args),
     )
