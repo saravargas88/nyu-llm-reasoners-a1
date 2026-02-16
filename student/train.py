@@ -170,7 +170,7 @@ def arg_parse():
     p.add_argument("--run_name",type= str, default= "run" )
     p.add_argument("--lr", type = float, default= 3e-4)
     p.add_argument("--lr_min", type=float, default=3e-5)
-    p.add_argument("--device", type=str, default="mps" if torch.backends.mps.is_available() else "cpu")
+    p.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     
 
     p.add_argument("--beta1", type = float, default= 0.9)
