@@ -327,7 +327,7 @@ def main():
         
         wandb.log({"train/loss": loss.item(), "train/lr": lr_t}, step=step)
 
-        if step % args.eval_interval == 0 or step == args.total_steps - 1:
+        if step %300 == 0 or step == args.total_steps - 1:
             val = validation_loss(model, val_data, args)
             time_elapsed = time.time() - start_time
             wandb.log({"val/loss": val}, step=step)
