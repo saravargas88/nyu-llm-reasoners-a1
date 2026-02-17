@@ -8,7 +8,7 @@
 BASE="uv run python -m student.train"
 
 MODEL="--vocab_size 10000 --context_length 256 --d_model 512 --d_ff 1344 --num_layers 4 --num_heads 16 --theta 10000"
-TRAIN_CFG="--total_steps 10000 --warmup_steps 200 --batch_size 64   --weight_decay 0.1 --beta1 0.9 --beta2 0.999 --grad_clip_max_l2_norm 1.0"
+TRAIN_CFG="--total_steps 10000 --warmup_steps 200 --batch_size 64   --weight_decay 0.1 --beta1 0.9 --beta2 0.95 --grad_clip_max_l2_norm 1.0"
 
 SECTION=${1:-"lr_sweep"}
 
@@ -37,7 +37,7 @@ run_lr_sweep() {
 # !! UPDATE BEST_LR BELOW BEFORE RUNNING !!
 # ─────────────────────────────────────────────────────────────────────────────
 run_ablations() {
-    echo "=== Ablations (6 runs, ~3.5 hrs on MPS) ==="
+    echo "=== Ablations ==="
 
     BEST_LR=3e-4    # ← UPDATE THIS after checking wandb from lr_sweep
     BEST_LR_MIN=$(uv run python3 -c "print($BEST_LR / 10)")
