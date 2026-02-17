@@ -7,9 +7,8 @@
 
 BASE="uv run python -m student.train"
 
-# MPS low-resource config: 32 * 5000 * 256 = 40,960,000 tokens (~36 min/run)
 MODEL="--vocab_size 10000 --context_length 256 --d_model 512 --d_ff 1344 --num_layers 4 --num_heads 16 --theta 10000"
-TRAIN_CFG="--total_steps 10000 --warmup_steps 200 --batch_size 32 --weight_decay 0.1 --beta1 0.9 --beta2 0.999 --grad_clip_max_l2_norm 1.0"
+TRAIN_CFG="--total_steps 10000 --warmup_steps 200 --batch_size 64   --weight_decay 0.1 --beta1 0.9 --beta2 0.999 --grad_clip_max_l2_norm 1.0"
 
 SECTION=${1:-"lr_sweep"}
 
@@ -18,21 +17,20 @@ SECTION=${1:-"lr_sweep"}
 # Coarse sweep (6) + 2 divergent runs for "edge of stability" deliverable
 # ─────────────────────────────────────────────────────────────────────────────
 run_lr_sweep() {
-    
+    echo "=== LR sweep (efficient edge-of-stability search) ==="
 
-    # coarse sweep
-    for LR in  1e-3 3e-3 1e-2; do
+    for LR in 2e-4 3e-4 5e-4 8e-4 1e-3; do
         echo "--- starting lr=${LR} ---"
         $BASE \
             $MODEL $TRAIN_CFG \
             --lr $LR \
             --lr_min $(uv run python3 -c "print($LR / 10)") \
-            --run_name "lr_coarse__lr=${LR}"
+            --run_name "lr_sweep__lr=${LR}" \
+            --wandb_project "llm-a1-lr-sweep"
     done
 
-    echo "=== LR sweep done — check wandb, update BEST_LR in ablations ==="
+    echo "=== LR sweep done — check wandb for best LR and divergence ==="
 }
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Ablations — 6 runs, ~3.5 hours
 # Run tomorrow after finding best LR from wandb
@@ -43,6 +41,7 @@ run_ablations() {
 
     BEST_LR=3e-4    # ← UPDATE THIS after checking wandb from lr_sweep
     BEST_LR_MIN=$(uv run python3 -c "print($BEST_LR / 10)")
+
     ABLATION_CFG="--lr $BEST_LR --lr_min $BEST_LR_MIN $TRAIN_CFG"
 
     # baseline

@@ -57,7 +57,6 @@ class SGD(torch.optim.Optimizer):
 class AdamW(torch.optim.Optimizer):
     def __init__(self, params, lr=1e-3, betas=(0.9,0.999) , eps=  1e-8, weight_decay= 0.01):
         
-
         defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay)
         super().__init__(params, defaults)
 
@@ -164,6 +163,9 @@ import argparse
 
 def arg_parse(): 
     p= argparse.ArgumentParser()
+    p.add_argument("--wandb_project", type=str, default="hpc-llm-reasoners-a1")
+    
+    
     
     p.add_argument("--train_path", type=str, default="/ext3/nyu-llm-reasoners-a1/data/results/train_tokens.npy")
     p.add_argument("--val_path",   type=str, default="/ext3/nyu-llm-reasoners-a1/data/results/valid_tokens.npy")
@@ -234,8 +236,9 @@ def validation_loss(model, val_data, args):
 
 import wandb
 def init_wandb(args, model):
+    
     wandb.init(
-        project='llm-reasoners-a1',
+        project=args.wandb_project,
         entity="saravargasmar-new-york-university",
         name=args.run_name,
         config=vars(args),
