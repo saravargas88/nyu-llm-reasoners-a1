@@ -26,7 +26,7 @@ run_lr_sweep() {
             --lr $LR \
             --lr_min $(uv run python3 -c "print($LR / 10)") \
             --run_name "lr_sweep__lr=${LR}" \
-            --wandb_project "llm-a1-lr-sweep"
+            --wandb_project "hpc-2-llm-a1-lr-sweep"
     done
 
     echo "=== LR sweep done — check wandb for best LR and divergence ==="
