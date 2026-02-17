@@ -236,13 +236,14 @@ def validation_loss(model, val_data, args):
 
 import wandb
 def init_wandb(args, model):
-    
     wandb.init(
-        project=args.wandb_project,
-        entity="saravargasmar-new-york-university",
-        name=args.run_name,
-        config=vars(args),
+    project=args.wandb_project,
+    entity="saravargasmar-new-york-university",
+    name=args.run_name,
+    config=vars(args),
+    dir="/scratch/ql2221/CT_models/wandb_data",
     )
+    
 
     #log model size
     wandb.config.update({

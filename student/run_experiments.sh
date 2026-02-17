@@ -8,18 +8,15 @@
 BASE="uv run python -m student.train"
 
 MODEL="--vocab_size 10000 --context_length 256 --d_model 512 --d_ff 1344 --num_layers 4 --num_heads 16 --theta 10000"
-TRAIN_CFG="--total_steps 20000 --warmup_steps 1000 --batch_size 64   --weight_decay 0.1 --beta1 0.9 --beta2 0.95 --grad_clip_max_l2_norm 1.0"
+TRAIN_CFG="--total_steps 20000 --warmup_steps 2000 --batch_size 64   --weight_decay 0.1 --beta1 0.9 --beta2 0.999 --grad_clip_max_l2_norm 1.0"
 
 SECTION=${1:-"lr_sweep"}
 
-# ─────────────────────────────────────────────────────────────────────────────
-# LR sweep — 8 runs, ~5 hours overnight
-# Coarse sweep (6) + 2 divergent runs for "edge of stability" deliverable
-# ─────────────────────────────────────────────────────────────────────────────
 run_lr_sweep() {
     echo "=== LR sweep (efficient edge-of-stability search) ==="
 
-    for LR in 1e-3 1e-2 5e-1; do
+    
+    for LR in 2e-3 3e-4 6e-4; do
         echo "--- starting lr=${LR} ---"
         $BASE \
             $MODEL $TRAIN_CFG \
