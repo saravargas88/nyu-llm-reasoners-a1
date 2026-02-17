@@ -253,9 +253,7 @@ def main():
     args= arg_parse()
     train_data = np.load(args.train_path, mmap_mode="r")
     val_data   = np.load(args.val_path,   mmap_mode="r")
-    
-    
-    
+
     
     model = TransformerLM(
         vocab_size=args.vocab_size, 
