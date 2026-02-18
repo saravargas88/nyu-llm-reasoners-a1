@@ -13,7 +13,7 @@ def softmax(x , ith_dim) -> torch.Tensor:
 def scaled_dot_product_attention(Q, K, V, mask=None) -> torch.Tensor: 
     dk= Q.shape[-1]
     
-    #scores (..., seq len Q , seqlen K)
+
     scores = einsum(Q, K, "... q d_k, ... k d_k -> ... q k") / (dk ** 0.5)
     
     if mask is not None: 

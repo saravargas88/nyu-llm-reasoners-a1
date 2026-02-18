@@ -28,8 +28,6 @@ def pretokenization(text: str) -> list[str]:
 
 
 def encode_file_to_numpy(tokenizer, input_path, output_path):
-    
-    # open the file as an iterable 
     with open(input_path, "r", encoding="utf-8") as f:
         token_ids = list(tokenizer.encode_iterable(f))
     

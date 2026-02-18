@@ -144,6 +144,7 @@ def save_checkpoint(model, optimizer, iteration, out):
         "model_state": model.state_dict(),
         "optimizer_state": optimizer.state_dict(),
         "iteration": iteration,
+        
     }
 
     torch.save(checkpoint, out)
@@ -163,16 +164,21 @@ import argparse
 
 def arg_parse(): 
     p= argparse.ArgumentParser()
-    p.add_argument("--wandb_project", type=str, default="hpc-llm-reasoners-a1")
+    p.add_argument("--wandb_project", type=str, default="ablations-llm-reasoners-a1")
     
+    # p.add_argument("--train_path", type=str, default="/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/results/train_tokens.npy")
+    # p.add_argument("--val_path",   type=str, default="/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/results/valid_tokens.npy")
+    # p.add_argument("--checkpoint_dir", type=str, default="/Users/sara/Desktop/SPRING2026/LLM Reasoners/nyu-llm-reasoners-a1/data/checkpoints")
     
-    
+    p.add_argument("--checkpoint_dir", type=str, default="/ext3/nyu-llm-reasoners-a1/data/checkpoints")
     p.add_argument("--train_path", type=str, default="/ext3/nyu-llm-reasoners-a1/data/results/train_tokens.npy")
     p.add_argument("--val_path",   type=str, default="/ext3/nyu-llm-reasoners-a1/data/results/valid_tokens.npy")
+    
+    
     p.add_argument("--run_name",type= str, default= "run" )
     p.add_argument("--lr", type = float, default= 3e-4)
     p.add_argument("--lr_min", type=float, default=3e-5)
-    p.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
+    p.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else 'cpu')
     
 
     p.add_argument("--beta1", type = float, default= 0.9)
@@ -181,7 +187,6 @@ def arg_parse():
     
     p.add_argument("--weight_decay", type = float, default= 0.1)
     
-    p.add_argument("--checkpoint_dir", type=str, default="/ext3/nyu-llm-reasoners-a1/data/checkpoints")
     p.add_argument("--checkpoint", type=str, default=None,
                    help="Path to a checkpoint to resume training from")
     
@@ -215,9 +220,6 @@ def arg_parse():
     
 from student.Transformer import TransformerLM
 
-
-
-
 @torch.no_grad()
 def validation_loss(model, val_data, args):
     model.eval()
@@ -242,6 +244,7 @@ def init_wandb(args, model):
     name=args.run_name,
     config=vars(args),
     dir="/scratch/ql2221/CT_models/wandb_data",
+    
     )
     
 
@@ -326,9 +329,10 @@ def main():
         
         wandb.log({"train/loss": loss.item(), "train/lr": lr_t}, step=step)
 
-        if step %300 == 0 or step == args.total_steps - 1:
+        if step %500== 0 or step == args.total_steps - 1:
             val = validation_loss(model, val_data, args)
             time_elapsed = time.time() - start_time
+            
             wandb.log({"val/loss": val}, step=step)
             print(
                 f"step {step:6d} | "
@@ -337,7 +341,12 @@ def main():
                 f"lr {lr_t:.2e} | "
                 f"{time_elapsed:.0f}s"
             )
-            ckpt_path = os.path.join(args.checkpoint_dir, f"step_{step:06d}.pt")
+            
+            lr_tag = f"lr_{args.lr:.0e}"
+            chkpoint_dir = os.path.join(args.checkpoint_dir, lr_tag)
+            os.makedirs(chkpoint_dir, exist_ok= True)
+            
+            ckpt_path = os.path.join(chkpoint_dir, f"step_{step:06d}.pt")
             save_checkpoint(model, optimiser, step, ckpt_path)
 
             

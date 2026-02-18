@@ -5,34 +5,16 @@
 #   ./student/run_experiments.sh ablations     ← run tomorrow after checking wandb
 #   ./student/run_experiments.sh batch_sweep   ← optional, skip if short on time
 
-BASE="uv run python -m student.train"
+BASE="uv run python -m train"
 
 MODEL="--vocab_size 10000 --context_length 256 --d_model 512 --d_ff 1344 --num_layers 4 --num_heads 16 --theta 10000"
-TRAIN_CFG="--total_steps 20000 --warmup_steps 2000 --batch_size 64   --weight_decay 0.1 --beta1 0.9 --beta2 0.999 --grad_clip_max_l2_norm 1.0"
+TRAIN_CFG="--total_steps 20000 --warmup_steps 2000 --batch_size 64   --weight_decay 0.1 --beta1 0.9 --beta2 0.999 --grad_clip_max_l2_norm 1.0 " 
 
-SECTION=${1:-"lr_sweep"}
-
-run_lr_sweep() {
-    echo "=== LR sweep (efficient edge-of-stability search) ==="
-
-    
-    for LR in 2e-3 3e-4 6e-4; do
-        echo "--- starting lr=${LR} ---"
-        $BASE \
-            $MODEL $TRAIN_CFG \
-            --lr $LR \
-            --lr_min $(uv run python3 -c "print($LR / 10)") \
-            --run_name "lr_sweep__lr=${LR}" \
-            --wandb_project "hpc-3-llm-a1-lr-sweep"
-    done
-
-    echo "=== LR sweep done — check wandb for best LR and divergence ==="
-}
-
+SECTION=${1:-"ablations"}
 run_ablations() {
     echo "=== Ablations ==="
 
-    BEST_LR=3e-4    # ← UPDATE THIS after checking wandb from lr_sweep
+    BEST_LR=1e-3    
     BEST_LR_MIN=$(uv run python3 -c "print($BEST_LR / 10)")
 
     ABLATION_CFG="--lr $BEST_LR --lr_min $BEST_LR_MIN $TRAIN_CFG"
