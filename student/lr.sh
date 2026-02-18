@@ -24,5 +24,5 @@ uv run python -m student.train \
   --beta2 0.999 \
   --grad_clip_max_l2_norm 1.0 \
   --wandb_project lr_divergence_test \
-  --run_name lr_1.5e-2_shock
+  --run_name lr_2e-2_shock
   
