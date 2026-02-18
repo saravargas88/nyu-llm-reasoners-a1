@@ -343,11 +343,14 @@ def main():
             )
             
             lr_tag = f"lr_{args.lr:.0e}"
-            chkpoint_dir = os.path.join(args.checkpoint_dir, lr_tag)
-            os.makedirs(chkpoint_dir, exist_ok= True)
-            
+            run_tag = args.run_name  # already unique in your bash script
+
+            chkpoint_dir = os.path.join(args.checkpoint_dir, run_tag, lr_tag)
+            os.makedirs(chkpoint_dir, exist_ok=True)
+
             ckpt_path = os.path.join(chkpoint_dir, f"step_{step:06d}.pt")
             save_checkpoint(model, optimiser, step, ckpt_path)
+
 
             
     
