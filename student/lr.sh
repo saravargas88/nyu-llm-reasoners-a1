@@ -7,7 +7,7 @@
 #SBATCH --partition=compute
 #SBATCH --output=logs/lr_5e-2.out
 
-LR=5e-2
+LR=2.5e-2
 
 uv run python -m student.train \
   --train_path /home/ql2221/Projects/train_tokens.npy \
@@ -24,5 +24,5 @@ uv run python -m student.train \
   --beta2 0.999 \
   --grad_clip_max_l2_norm 1.0 \
   --wandb_project lr_divergence_test \
-  --run_name lr_5e-2_shock
+  --run_name lr_2.5e-2_shock
   
