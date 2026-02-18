@@ -16,7 +16,7 @@ uv run python -m student.train \
   --checkpoint /scratch/ql2221/checkpoints_h200/lr_1.5e-2_shock/lr_1e-02/step_002500.pt \
   --device cuda \
   --batch_size 64 \
-  --total_steps 3000 \
+  --total_steps 10000 \
   --warmup_steps 0 \
   --lr $LR \
   --lr_min $LR \
