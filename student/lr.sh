@@ -10,8 +10,7 @@
 LR=1.5e-2
 
 uv run python -m student.train \
-  #--train_path /home/ql2221/Projects/train_tokens.npy \
-  #--val_path /home/ql2221/Projects/valid_tokens.npy \
+  
   --train_path /root/Projects/train_tokens.npy
   --val_path /root/Projects/Projects/valid_tokens.npy
   
