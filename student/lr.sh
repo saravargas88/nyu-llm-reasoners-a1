@@ -7,7 +7,7 @@
 #SBATCH --partition=compute
 #SBATCH --output=logs/lr_5e-2.out
 
-LR=2.5e-2
+LR=1.5e-2
 
 uv run python -m student.train \
   --train_path /home/ql2221/Projects/train_tokens.npy \
