@@ -13,7 +13,7 @@ uv run python -m student.train \
   --train_path /root/Projects/train_tokens.npy \
   --val_path /root/Projects/valid_tokens.npy \
   --checkpoint_dir /scratch/ql2221/checkpoints_h200 \
-  --checkpoint /scratch/ql2221/checkpoints_h200/lr_1.5e-2_shock/lr_1e-02 \
+  --checkpoint /scratch/ql2221/checkpoints_h200/lr_1.5e-2_shock/lr_1e-02/step_002500.pt \
   --device cuda \
   --batch_size 64 \
   --total_steps 3000 \
