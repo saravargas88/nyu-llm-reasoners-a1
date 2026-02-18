@@ -3,7 +3,7 @@
 # Goal: refine LR around 1e-4 (your current best), then test batch sizes 64 vs 128.
 # H200 / CUDA assumed.
 
-BASE="uv run python student/train.py"
+BASE="uv run python -m student.train""
 
 TRAIN_PATH="/home/ql2221/train_tokens.npy"
 VAL_PATH="/home/ql2221/valid_tokens.npy"
