@@ -290,7 +290,7 @@ def main():
     start_step = 0
     #if there is a checkpoint to load 
     if args.checkpoint: 
-        start_step = load_checkpoint(args.checkpoint_dir + args.checkpoint, model, optimiser)
+        start_step = load_checkpoint(args.checkpoint, model, optimiser)
         print("resumed at step {start_step}")
         
     model.train()
