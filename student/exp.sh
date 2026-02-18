@@ -5,8 +5,8 @@
 
 BASE="uv run python -m student.train"
 
-TRAIN_PATH="/home/ql2221/train_tokens.npy"
-VAL_PATH="/home/ql2221/valid_tokens.npy"
+TRAIN_PATH="/home/ql2221/Projects/train_tokens.npy"
+VAL_PATH="/home/ql2221/Projects/valid_tokens.npy"
 CKPT_DIR="/scratch/ql2221/checkpoints_h200"
 mkdir -p "$CKPT_DIR"
 
