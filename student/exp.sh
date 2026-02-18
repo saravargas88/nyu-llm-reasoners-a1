@@ -48,7 +48,7 @@ MODEL="--vocab_size 10000 \
 # 32 * 5000 * 256 = 40,960,000 tokens (per assignment MPS spec).
 # warmup = 10% of 5000 = 500 steps.
 # Cosine decay runs from step 0 to exactly step 5000 (Tc = total_steps).
-MPS_TRAIN="--batch_size 32 \
+MPS_TRAIN="--batch_size 64 \
            --total_steps 5000 \
            --warmup_steps 500 \
            --weight_decay 0.1 \
