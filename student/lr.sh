@@ -7,7 +7,8 @@
 #SBATCH --partition=compute
 #SBATCH --output=logs/lr_5e-2.out
 # --checkpoint /scratch/ql2221/checkpoints_h200/lr_1.5e-2_shock/lr_1e-02/step_002999.pt \
-LR=2e-2
+LR=1.7e-2
+
 
 uv run python -m student.train \
   --train_path /root/Projects/train_tokens.npy \
@@ -24,5 +25,5 @@ uv run python -m student.train \
   --beta2 0.999 \
   --grad_clip_max_l2_norm 1.0 \
   --wandb_project lr_divergence_test \
-  --run_name lr_2e-2_shock
+  --run_name lr_1.7e-2_shock
   
