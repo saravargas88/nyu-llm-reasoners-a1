@@ -9,12 +9,10 @@ import argparse
 def arg_parse():
     p = argparse.ArgumentParser(description="Generate text from a trained Transformer LM")
 
-    # required: where to find the model and tokenizer
     p.add_argument("--checkpoint",       type=str, required=True)
     p.add_argument("--tokenizer_vocab",  type=str, required=True)
     p.add_argument("--tokenizer_merges", type=str, required=True)
-
-    #model tuning 
+    
     p.add_argument("--vocab_size",     type=int,   default=10_000)
     p.add_argument("--context_length", type=int,   default=256)
     p.add_argument("--d_model",        type=int,   default=512)
@@ -48,7 +46,7 @@ def decoder(model , prompt_ids, max_tokens_generated, temperature,  device):
     
     for i in range(max_tokens_generated):
         
-        context_tensor= torch.tensor([prompt], dtype= torch.int, device= device)
+        context_tensor= torch.tensor([prompt], dtype= torch.long , device= device)
         
         #forward: infer over the vocab size 
         logits = model(context_tensor)
@@ -61,7 +59,8 @@ def decoder(model , prompt_ids, max_tokens_generated, temperature,  device):
         #sample token from distribution 
         next_token_id = torch.multinomial(probs, num_samples=1).item()
         
-        if next_token_id == "<|endoftext|>":
+        eos_id = tokenizer.token_to_id("<|endoftext|>")
+        if next_token_id == eos_id:
             break
         
         generated.append(next_token_id)
