@@ -7,9 +7,9 @@
 #SBATCH --partition=compute
 #SBATCH --output=logs/lr_5e-2.out
 
-LR=1.5e-2
+LR=1e-3
 
-
+#note i messed up the labeling the LR are all e-3
 uv run python -m student.train \
   --train_path /root/Projects/train_tokens.npy \
   --val_path /root/Projects/valid_tokens.npy \
@@ -26,5 +26,5 @@ uv run python -m student.train \
   --beta2 0.999 \
   --grad_clip_max_l2_norm 1.0 \
   --wandb_project lr_divergence_test \
-  --run_name lr_1.5e-2_shock
+  --run_name lr_1e-3_shock
   
