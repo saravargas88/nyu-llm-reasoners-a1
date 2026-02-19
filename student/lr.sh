@@ -6,6 +6,7 @@
 #SBATCH --time=04:00:00
 #SBATCH --partition=compute
 #SBATCH --output=logs/lr_5e-2.out
+#--checkpoint /scratch/ql2221/checkpoints_h200/lr_1.5e-2_shock/lr_1e-02/step_009999.pt \
 
 LR=1e-3
 
@@ -13,7 +14,6 @@ LR=1e-3
 uv run python -m student.train \
   --train_path /root/Projects/train_tokens.npy \
   --val_path /root/Projects/valid_tokens.npy \
-  --checkpoint /scratch/ql2221/checkpoints_h200/lr_1.5e-2_shock/lr_1e-02/step_009999.pt \
   --checkpoint_dir /scratch/ql2221/checkpoints_h200 \
   --device cuda \
   --batch_size 64 \
