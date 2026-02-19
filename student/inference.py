@@ -26,7 +26,7 @@ def arg_parse():
     p.add_argument("--temperature",    type=float, default=1.0)
     p.add_argument("--device",         type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     
-    
+    return p.parse_args()
     
 def softmax_temp(logits, temp) -> torch.Tensor:
     # trick of subtracting max val in ith dim from all eelemtns for numerical stability
