@@ -89,7 +89,7 @@ if __name__ == "__main__":
         d_ff=args.d_ff,
         num_layers=args.num_layers,
         num_heads=args.num_heads,
-        rope_theta=args.rope_theta,
+        theta=args.rope_theta,
     ).to(args.device)
 
     checkpoint = torch.load(args.checkpoint, map_location=args.device)
