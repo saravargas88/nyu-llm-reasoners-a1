@@ -2,13 +2,13 @@
 set -euo pipefail
 
 # ---- user-tuned defaults ----
-PROJECT="ablations-llm-reasoners-a1"
+PROJECT="lr_divergence_test"
 CKPT_DIR="/scratch/ql2221/checkpoints_h200"
 TRAIN_PATH="/home/ql2221/Projects/train_tokens.npy"
 VAL_PATH="/home/ql2221/Projects/valid_tokens.npy"
 
 # optimal LR you found
-LR=1e-5
+LR=1e-3
 
 # keep cosine schedule shape similar; make lr_min smaller but same order
 # (if you want strictly constant LR, set LR_MIN=
