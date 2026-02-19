@@ -48,7 +48,6 @@ run () {
     --train_path "${TRAIN_PATH}" \
     --val_path "${VAL_PATH}" \
     --lr "${LR}" \
-    --lr_min "${LR_MIN}" \
     --total_steps "${TOTAL_STEPS}" \
     --warmup_steps "${WARMUP_STEPS}" \
     --batch_size "${BATCH_SIZE}" \
