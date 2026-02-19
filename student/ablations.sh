@@ -3,9 +3,9 @@ set -euo pipefail
 
 # ---- user-tuned defaults ----
 PROJECT="ablations-llm-reasoners-a1"
-CKPT_DIR="/ext3/nyu-llm-reasoners-a1/data/checkpoints"
-TRAIN_PATH="/ext3/nyu-llm-reasoners-a1/data/results/train_tokens.npy"
-VAL_PATH="/ext3/nyu-llm-reasoners-a1/data/results/valid_tokens.npy"
+CKPT_DIR="/scratch/ql2221/checkpoints_h200"
+TRAIN_PATH="/home/ql2221/Projects/train_tokens.npy"
+VAL_PATH="/home/ql2221/Projects/valid_tokens.npy"
 
 # optimal LR you found
 LR=1e-5
@@ -113,7 +113,7 @@ print(f"{lr/10:.1e}")
 PY
 "${LOW_LR}")"
 
-  python train.py \
+  python student/train.py \
     --wandb_project "${PROJECT}" \
     --run_name "ablation_no_rmsnorm__lr${LOW_LR}__${STAMP}" \
     --checkpoint_dir "${CKPT_DIR}" \
