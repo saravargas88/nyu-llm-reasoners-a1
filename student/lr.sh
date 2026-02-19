@@ -20,7 +20,7 @@ uv run python -m student.train \
   --total_steps 50000 \
   --warmup_steps 0 \
   --lr $LR \
-  --lr_min $LR \
+  --lr_min 1e-5 \
   --weight_decay 0.1 \
   --beta1 0.9 \
   --beta2 0.999 \
