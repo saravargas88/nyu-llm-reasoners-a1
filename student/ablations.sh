@@ -11,8 +11,7 @@ VAL_PATH="/home/ql2221/Projects/valid_tokens.npy"
 LR=1e-5
 
 # keep cosine schedule shape similar; make lr_min smaller but same order
-# (if you want strictly constant LR, set LR_MIN=1e-5 and warmup_steps=0)
-LR_MIN=1e-6
+# (if you want strictly constant LR, set LR_MIN=
 
 # training budget knobs (match your assignment budget)
 TOTAL_STEPS=5000
@@ -113,7 +112,7 @@ print(f"{lr/10:.1e}")
 PY
 "${LOW_LR}")"
 
-  python student/train.py \
+  uv run train.py \
     --wandb_project "${PROJECT}" \
     --run_name "ablation_no_rmsnorm__lr${LOW_LR}__${STAMP}" \
     --checkpoint_dir "${CKPT_DIR}" \
