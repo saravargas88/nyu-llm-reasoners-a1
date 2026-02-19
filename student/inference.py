@@ -59,7 +59,7 @@ def decoder(model , prompt_ids, max_tokens_generated, temperature,  device):
         #sample token from distribution 
         next_token_id = torch.multinomial(probs, num_samples=1).item()
         
-        eos_id = tokenizer.token_to_id("<|endoftext|>")
+        eos_id = tokenizer.token_to_id["<|endoftext|>"]
         if next_token_id == eos_id:
             break
         
