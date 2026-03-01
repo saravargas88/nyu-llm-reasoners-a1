@@ -1,7 +1,5 @@
 #!/bin/bash
-# h200_lr_refine_then_bs64_128.sh
-# Goal: refine LR around 1e-4 (your current best), then test batch sizes 64 vs 128.
-# H200 / CUDA assumed.
+
 
 BASE="uv run python -m student.train"
 

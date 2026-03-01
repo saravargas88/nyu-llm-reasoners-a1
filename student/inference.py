@@ -1,5 +1,4 @@
 
-
 #INFERENCE TIME: now we use LM to predict next token and we decode it 
 import torch
 from student.Tokenizer import Tokenizer
@@ -12,7 +11,6 @@ def arg_parse():
     p.add_argument("--checkpoint",       type=str, required=True)
     p.add_argument("--tokenizer_vocab",  type=str, required=True)
     p.add_argument("--tokenizer_merges", type=str, required=True)
-    
     p.add_argument("--vocab_size",     type=int,   default=10_000)
     p.add_argument("--context_length", type=int,   default=256)
     p.add_argument("--d_model",        type=int,   default=512)
@@ -20,7 +18,6 @@ def arg_parse():
     p.add_argument("--num_layers",     type=int,   default=4)
     p.add_argument("--num_heads",      type=int,   default=16)
     p.add_argument("--rope_theta",     type=float, default=10_000.0)
-
     p.add_argument("--prompt",         type=str)
     p.add_argument("--max_new_tokens", type=int,   default=256)
     p.add_argument("--temperature",    type=float, default=1.0)
@@ -99,6 +96,7 @@ if __name__ == "__main__":
     prompt_ids = tokenizer.encode(args.prompt)
     print(f"\nPrompt: {args.prompt}  ")
     print(f"temperature={args.temperature} \n")
+    
     print("─" * 60)
     
     #generate 
